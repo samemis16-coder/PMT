@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ustyapi Soguk Karisim Imalat Hesabi</title>
+<style>
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:18px;
+  }
+  .container{
+    max-width:700px;
+    margin:0 auto;
+    background:#fff;
+    padding:20px;
+    border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.10);
+  }
+  h1{ text-align:center; margin:6px 0 6px; font-size:22px; }
+  .author{
+    text-align:center;
+    font-size:14px;
+    color:#667085;
+    margin-bottom:16px;
+  }
+  label{ display:block; font-size:18px; margin:10px 0 6px; }
+  input{
+    width:100%;
+    padding:14px;
+    font-size:20px;
+    border-radius:10px;
+    border:1px solid #cfd6df;
+    box-sizing:border-box;
+  }
+  .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .section{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid #e6ebf2;
+  }
+  button{
+    width:100%;
+    padding:16px;
+    font-size:20px;
+    background:#007aff;
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    margin-top:14px;
+    font-weight:800;
+  }
+  .btn-secondary{
+    background:#344054;
+  }
+  .warn{
+    margin-top:14px;
+    font-size:15px;
+    color:#b42318;
+    background:#fff5f4;
+    border:1px solid #fecdca;
+    padding:12px;
+    border-radius:12px;
+    display:none;
+  }
+  .result{
+    margin-top:14px;
+    font-size:18px;
+    line-height:1.55;
+    background:#f7f9fc;
+    border:1px solid #e6ebf2;
+    padding:14px;
+    border-radius:12px;
+  }
+  .footer{
+    margin-top:20px;
+    text-align:center;
+    font-size:13px;
+    color:#98a2b3;
+  }
+  @media print {
+    button { display:none; }
+    body { background:#fff; }
+  }
+</style>
+</head>
+
+<body>
+<div class="container" id="printArea">
+  <h1>Ustyapi Soguk Karisim Imalat Hesabi</h1>
+  <div class="author">Developed by Samet Memis</div>
+
+  <div class="row">
+    <div>
+      <label>Kalinlik (cm)</label>
+      <input type="number" id="thickness">
+    </div>
+    <div>
+      <label>Genislik (m)</label>
+      <input type="number" id="width">
+    </div>
+  </div>
+
+  <label>Uzunluk (km)</label>
+  <input type="number" id="length">
+
+  <label>Modifiye Proktor (t/m3)</label>
+  <input type="number" id="density">
+
+  <div class="row">
+    <div>
+      <label>OMC (%)</label>
+      <input type="number" id="omc">
+    </div>
+    <div>
+      <label>Su Duzeltme (puan)</label>
+      <input type="number" id="waterAdj" value="1">
+    </div>
+  </div>
+
+  <div class="section">
+    <h1 style="font-size:18px;text-align:left;">Agrega Karisim Oranlari (%)</h1>
+    <div class="row3">
+      <input type="number" id="p1" placeholder="Malzeme 1 (%)">
+      <input type="number" id="p2" placeholder="Malzeme 2 (%)">
+      <input type="number" id="p3" placeholder="Malzeme 3 (%)">
+    </div>
+    <div class="row3">
+      <input type="number" id="p4" placeholder="Malzeme 4 (%)">
+      <input type="number" id="p5" placeholder="Malzeme 5 (%)">
+      <input type="number" id="p6" placeholder="Malzeme 6 (%)">
+    </div>
+  </div>
+
+  <button onclick="calc()">HESAPLA</button>
+  <button class="btn-secondary" onclick="window.print()">PDF CIKTI AL</button>
+
+  <div class="warn" id="warn"></div>
+  <div class="result" id="result">Sonuclar burada gorunecek.</div>
+
+  <div class="footer">
+    Ustyapi Soguk Karisim Imalat Hesabi - Samet Memis
+  </div>
+</div>
+
+<script>
+function num(id){
+  const v=document.getElementById(id).value;
+  if(v===""||v===null) return 0;
+  return Number(v);
+}
+function fmt(x){
+  return x.toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function calc(){
+  const t=num("thickness"), w=num("width"), l=num("length"),
+        d=num("density"), omc=num("omc"), adj=num("waterAdj");
+
+  if(!t||!w||!l||!d||!omc){
+    document.getElementById("warn").style.display="block";
+    document.getElementById("warn").innerHTML="Tum zorunlu alanlari doldurun.";
+    return;
+  }
+
+  const volume=(t/100)*w*(l*1000);
+  const imalat=volume*d;
+  const suPct=(omc-adj)/100;
+  const su=imalat*suPct;
+  const agrega=imalat-su;
+
+  let kirilim="";
+  for(let i=1;i<=6;i++){
+    const p=num("p"+i);
+    if(p>0){
+      kirilim+="Malzeme "+i+": "+fmt(agrega*(p/100))+" ton<br>";
+    }
+  }
+
+  document.getElementById("warn").style.display="none";
+  document.getElementById("result").innerHTML=
+    "<b>Hacim:</b> "+fmt(volume)+" m3<br>"+
+    "<b>Imalat:</b> "+fmt(imalat)+" ton<br>"+
+    "<b>Su:</b> "+fmt(su)+" ton<br>"+
+    "<b>Agrega:</b> "+fmt(agrega)+" ton<br><br>"+
+    kirilim;
+}
+</script>
+</body>
+</html>
